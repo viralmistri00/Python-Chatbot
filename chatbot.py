@@ -174,11 +174,36 @@ chatbot_qa = {
 }
 
 def get_response(user_input):
-    user_input = user_input.lower().strip()
+        user_input = user_input.lower().strip()
     for key in chatbot_qa:
         if key in user_input:
             answers = chatbot_qa[key]
-            return random.choice(answers)
+            # Extract keywords (filter out common stopwords)
+            stopwords = ["what", "is", "your", "the", "a", "do", "are", "can", "help", "i", "you", "me", "with", "to", "of", "in", "on", "my", "for", "and", "how", "tell", "about"]
+            words = [w for w in user_input.split() if w.isalpha() and w not in stopwords]
+            keywords = [w.capitalize() for w in words if len(w) > 2]  # Only words with 3+ characters
+            
+            response = random.choice(answers)
+            
+            # Check if this is a single/simple question (few words)
+            if len(user_input.split()) <= 5 and keywords:
+                # Add keyword-based suggestions
+                related_topics = []
+                for kw in keywords[:3]:  # Limit to top 3 keywords
+                    # Find related topics from chatbot_qa keys
+                    for topic_key in chatbot_qa.keys():
+                        if kw.lower() in topic_key and topic_key != key:
+                            related_topics.append(topic_key.replace("_", " ").title())
+                            break
+                
+                if related_topics:
+                    suggestion_text = f"\n\n💡 You might also ask about: {', '.join(related_topics[:3])}"
+                    return response + suggestion_text
+                elif keywords:
+                    suggestion_text = f"\n\n💡 Related keywords: {', '.join(keywords[:3])}"
+                    return response + suggestion_text
+            
+            return response
     return "the user question isn't recognized and the user should ask another one. 🤔"
 
 # main function to start chat
